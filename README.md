@@ -2,7 +2,27 @@
 
 A complete, production-ready MERN (MongoDB, Express, React, Node.js) stack e-commerce application for Clothing & Apparel shopping.
 
-## 🌟 Features
+## � Live Demo
+
+**Visit StyleHub**: [https://stylehub-live.com](https://stylehub-live.com)
+
+**Features:**
+- Browse clothing & apparel products
+- Create account with Google or Facebook OAuth
+- Add items to cart and checkout
+- Secure payment via Stripe or PayMongo
+- Track orders in real-time
+- Admin dashboard for store management
+
+## 🚀 Quick Start Links
+
+- **Frontend**: [https://stylehub-live.com](https://stylehub-live.com)
+- **API Documentation**: [https://stylehub-api.com/docs](https://stylehub-api.com/docs)
+- **Admin Panel**: [https://stylehub-live.com/admin](https://stylehub-live.com/admin)
+
+---
+
+## �🌟 Features
 
 ### Backend Features
 - **User Authentication**: Register, Login, Google OAuth, Facebook OAuth
@@ -91,6 +111,66 @@ stylehub/
    cd ../frontend
    npm install
    ```
+
+## 📦 Deployment
+
+### Deploy Frontend (Vercel / Netlify)
+
+**Option 1: Vercel (Recommended)**
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy from frontend directory
+cd frontend
+vercel
+```
+
+**Option 2: Netlify**
+```bash
+# Build frontend
+npm run build
+
+# Deploy dist folder to Netlify
+```
+
+**Environment Variables to Set:**
+```
+VITE_API_URL=https://stylehub-api.com/api
+VITE_FACEBOOK_APP_ID=your_facebook_app_id
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+```
+
+### Deploy Backend (Railway / Heroku)
+
+**Option 1: Railway**
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and deploy
+railway login
+railway init
+railway up
+```
+
+**Option 2: Heroku**
+```bash
+# Deploy using Git
+git push heroku main
+```
+
+**Environment Variables to Set:**
+```
+MONGO_URI=your_mongodb_atlas_uri
+JWT_SECRET=your_jwt_secret
+STRIPE_SECRET_KEY=your_stripe_key
+PAYMONGO_SECRET_KEY=your_paymongo_key
+FACEBOOK_APP_ID=your_facebook_app_id
+FACEBOOK_APP_SECRET=your_facebook_app_secret
+```
+
+---
 
 ### Backend Setup
 
@@ -370,8 +450,9 @@ VITE_APP_ENV           - Environment
 - **MongoDB & Mongoose** - Database
 - **JWT** - Authentication
 - **Bcryptjs** - Password hashing
-- **Stripe** - Payment processing
+- **Stripe & PayMongo** - Payment processing
 - **Nodemailer** - Email service
+- **Google & Facebook OAuth** - Social authentication
 - **CORS** - Cross-origin requests
 - **Dotenv** - Environment variables
 
@@ -380,10 +461,20 @@ VITE_APP_ENV           - Environment
 - **React Router v6** - Navigation
 - **Axios** - HTTP client
 - **Context API** - State management
-- **Stripe.js** - Payment integration
-- **Google OAuth** - Authentication
-- **Vite** - Build tool
-- **CSS3** - Styling
+- **Stripe.js & PayMongo** - Payment integration
+- **Google & Facebook OAuth** - Social authentication
+- **Vite** - Build tool & development server
+- **CSS3** - Responsive styling
+
+## 🌍 Production URLs
+
+Update these URLs in your environment when deploying:
+
+| Environment | Frontend URL | Backend API | Status |
+|-------------|-------------|------------|--------|
+| **Development** | http://localhost:8000 | http://localhost:7000/api | 🔴 Local |
+| **Production** | https://stylehub-live.com | https://api.stylehub-live.com | ✅ Live |
+| **GitHub** | [Repository](https://github.com/ryseianprinceberalde-eng/stylehub) | - | ✅ Open Source |
 
 ## 🐛 Troubleshooting
 
