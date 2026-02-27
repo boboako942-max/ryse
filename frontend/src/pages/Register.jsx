@@ -14,8 +14,11 @@ const Register = () => {
     password: '',
     confirmPassword: '',
   });
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showOTPForm, setShowOTPForm] = useState(false);
+  const [registrationEmail, setRegistrationEmail] = useState('');
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -70,12 +73,41 @@ const Register = () => {
 
     try {
       const response = await authAPI.register(formData);
+      setRegistrationEmail(formData.email);
+      setShowOTPForm(true);
+    } catch (err) {
+      console.error('Registration error:', err.response?.data);
+      const errorMsg = err.response?.data?.message || 'Registration failed';
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOTPSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!otp.trim()) {
+      setError('Please enter the OTP');
+      return;
+    }
+
+    if (otp.length !== 6) {
+      setError('OTP must be 6 digits');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await authAPI.verifyRegistrationOTP({ email: registrationEmail, otp });
       const { user, token } = response.data.data;
       login(user, token);
       navigate('/');
     } catch (err) {
-      console.error('Registration error:', err.response?.data);
-      const errorMsg = err.response?.data?.message || 'Registration failed';
+      console.error('OTP verification error:', err.response?.data);
+      const errorMsg = err.response?.data?.message || 'OTP verification failed';
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -185,113 +217,153 @@ const Register = () => {
   return (
     <div className="auth-page">
       <div className="auth-container">
-        <h1>Create Account</h1>
+        <h1>{showOTPForm ? 'Verify Email' : 'Create Account'}</h1>
 
         {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="firstName">First Name</label>
-            <input
-              type="text"
-              id="firstName"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-            />
-          </div>
+        {showOTPForm ? (
+          <form onSubmit={handleOTPSubmit} className="auth-form">
+            <p style={{ marginBottom: '20px', color: '#666' }}>
+              We've sent a 6-digit OTP to <strong>{registrationEmail}</strong>
+            </p>
 
-          <div className="form-group">
-            <label htmlFor="lastName">Last Name</label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            <div className="form-group">
+              <label htmlFor="otp">Enter OTP</label>
+              <input
+                type="text"
+                id="otp"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                maxLength="6"
+                required
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? 'Verifying...' : 'Verify OTP'}
+            </button>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        </form>
-
-        {googleClientId && (
+            <button
+              type="button"
+              className="back-btn"
+              onClick={() => {
+                setShowOTPForm(false);
+                setOtp('');
+                setError('');
+              }}
+              style={{ marginTop: '10px', background: '#6c757d' }}
+            >
+              Back to Registration
+            </button>
+          </form>
+        ) : (
           <>
-            <div className="divider">OR</div>
-
-            <div className="social-login">
-              <div className="google-login">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => {
-                    console.error('Google signup button error - check console');
-                    setError('Google signup failed. Check browser console for details.');
-                  }}
-                  text="signup_with"
+            <form onSubmit={handleSubmit} className="auth-form">
+              <div className="form-group">
+                <label htmlFor="firstName">First Name</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
                 />
               </div>
 
-              {facebookAppId && (
-                <div className="facebook-login">
-                  <FacebookLogin
-                    appId={facebookAppId}
-                    autoLoad={false}
-                    fields="name,picture,email"
-                    scope="public_profile,email"
-                    onClick={() => setLoading(true)}
-                    callback={handleFacebookSuccess}
-                    cssClass="facebook-login-button"
-                    icon="fa-facebook-f"
-                  />
+              <div className="form-group">
+                <label htmlFor="lastName">Last Name</label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? 'Registering...' : 'Register'}
+              </button>
+            </form>
+
+            {googleClientId && (
+              <>
+                <div className="divider">OR</div>
+
+                <div className="social-login">
+                  <div className="google-login">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => {
+                        console.error('Google signup button error - check console');
+                        setError('Google signup failed. Check browser console for details.');
+                      }}
+                      text="signup_with"
+                    />
+                  </div>
+
+                  {facebookAppId && (
+                    <div className="facebook-login">
+                      <FacebookLogin
+                        appId={facebookAppId}
+                        autoLoad={false}
+                        fields="name,picture,email"
+                        scope="public_profile,email"
+                        onClick={() => setLoading(true)}
+                        callback={handleFacebookSuccess}
+                        cssClass="facebook-login-button"
+                        icon="fa-facebook-f"
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
+
+            <p className="auth-link">
+              Already have an account? <Link to="/login">Login here</Link>
+            </p>
           </>
         )}
-
-        <p className="auth-link">
-          Already have an account? <Link to="/login">Login here</Link>
-        </p>
       </div>
     </div>
   );

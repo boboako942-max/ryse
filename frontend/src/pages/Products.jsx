@@ -129,7 +129,10 @@ const Products = () => {
           </div>
 
           {loading ? (
-            <p className="loading">Loading products...</p>
+            <div className="loading-state">
+              <div style={{ fontSize: '2rem', marginBottom: '1rem', animation: 'spin 1s linear infinite' }}>⏳</div>
+              <p>Loading products...</p>
+            </div>
           ) : products.length > 0 ? (
             <div className="products-grid">
               {products.map((product) => (

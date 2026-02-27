@@ -33,13 +33,31 @@ const Login = () => {
     setLoading(true);
 
     try {
+      console.log('Attempting login with:', { email: email.toLowerCase() });
       const response = await authAPI.login({ email: email.toLowerCase(), password });
-      const { user, token } = response.data.data;
+      console.log('Login response:', response);
+      console.log('Response data:', response.data);
+      
+      // The response structure is: { success: true, message: "...", data: { user: {...}, token: "..." } }
+      const { data } = response.data;
+      
+      if (!data || !data.user || !data.token) {
+        console.error('Missing user or token. Response:', response.data);
+        throw new Error('Missing user or token in response');
+      }
+      
+      const { user, token } = data;
+      console.log('Login successful, user:', user);
       login(user, token);
       navigate('/');
     } catch (err) {
-      console.error('Login error:', err.response?.data);
-      const errorMsg = err.response?.data?.message || 'Login failed';
+      console.error('Login error full details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        err
+      });
+      const errorMsg = err.response?.data?.message || err.message || 'Login failed. Please try again.';
       setError(errorMsg);
     } finally {
       setLoading(false);

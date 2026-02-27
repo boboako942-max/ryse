@@ -31,13 +31,18 @@ const Header = () => {
           <Link to="/wishlist" className="icon-link">
             <FiHeart /> Wishlist
           </Link>
-          <Link to="/cart" className="icon-link">
-            <FiShoppingCart /> Cart ({totalItems || 0})
+          <Link to="/cart" className="icon-link cart-link">
+            <FiShoppingCart />
+            <span>Cart</span>
+            {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
           </Link>
 
           {user ? (
             <div className="user-menu">
               <span className="user-name">{user.firstName}</span>
+              <Link to="/orders" className="icon-link">
+                📦 Orders
+              </Link>
               <Link to="/profile" className="icon-link">
                 <FiUser /> Profile
               </Link>

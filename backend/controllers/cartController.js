@@ -121,7 +121,12 @@ exports.updateCartItem = async (req, res, next) => {
 // Remove from Cart
 exports.removeFromCart = async (req, res, next) => {
   try {
-    const { productId, size, color } = req.body;
+    const { size, color } = req.body;
+    const { productId } = req.params;
+
+    if (!productId) {
+      return sendError(res, 400, 'Product ID is required');
+    }
 
     const cart = await Cart.findOne({ userId: req.user.id });
 
@@ -153,9 +158,13 @@ exports.removeFromCart = async (req, res, next) => {
 // Clear Cart
 exports.clearCart = async (req, res, next) => {
   try {
-    await Cart.findOneAndUpdate({ userId: req.user.id }, { items: [], totalPrice: 0, totalItems: 0 });
+    const cart = await Cart.findOneAndUpdate(
+      { userId: req.user.id },
+      { items: [], totalPrice: 0, totalItems: 0 },
+      { new: true }
+    );
 
-    return sendResponse(res, 200, true, 'Cart cleared successfully');
+    return sendResponse(res, 200, true, 'Cart cleared successfully', { cart });
   } catch (error) {
     next(error);
   }

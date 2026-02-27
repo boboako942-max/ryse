@@ -392,7 +392,9 @@ exports.createPayMongoPaymentIntent = async (req, res, next) => {
       amount: totalAmountInCents,
       currency: 'PHP',
       description: `StyleHub Order - ${orderId}`,
-      paymentMethodTypes: [paymentMethod], // ['gcash', 'card', 'paymaya']
+      paymentMethodTypes: paymentMethod && ['gcash', 'paymaya', 'card'].includes(paymentMethod) 
+        ? [paymentMethod] 
+        : ['gcash'],
       statementDescriptor: 'StyleHub Payment',
       returnUrl: `${process.env.FRONTEND_URL}/checkout/success?referenceId=${referenceId}`,
       metadata: {

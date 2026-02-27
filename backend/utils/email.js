@@ -62,4 +62,52 @@ const sendAdminNotification = async (orderDetails) => {
   }
 };
 
-module.exports = { sendOrderConfirmation, sendAdminNotification };
+const sendLoginOTP = async (userEmail, otp) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: userEmail,
+      subject: 'Login OTP - StyleHub',
+      html: `
+        <h2>StyleHub Login Verification</h2>
+        <p>Your one-time password (OTP) for login is:</p>
+        <h3 style="color: #007bff; font-size: 24px; letter-spacing: 2px;">${otp}</h3>
+        <p><strong>This OTP will expire in 10 minutes.</strong></p>
+        <p>If you did not attempt to login, please ignore this email.</p>
+        <p>Thanks,<br>StyleHub Team</p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Login OTP email sent to:', userEmail);
+  } catch (error) {
+    console.error('OTP email sending failed:', error);
+    throw error;
+  }
+};
+
+const sendRegistrationOTP = async (userEmail, otp) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: userEmail,
+      subject: 'Verify Your Email - StyleHub Registration',
+      html: `
+        <h2>Welcome to StyleHub!</h2>
+        <p>Thank you for signing up. Please verify your email address using the code below:</p>
+        <h3 style="color: #007bff; font-size: 24px; letter-spacing: 2px;">${otp}</h3>
+        <p><strong>This verification code will expire in 10 minutes.</strong></p>
+        <p>If you did not create this account, please ignore this email.</p>
+        <p>Thanks,<br>StyleHub Team</p>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Registration OTP email sent to:', userEmail);
+  } catch (error) {
+    console.error('Registration OTP email sending failed:', error);
+    throw error;
+  }
+};
+
+module.exports = { sendOrderConfirmation, sendAdminNotification, sendLoginOTP, sendRegistrationOTP };

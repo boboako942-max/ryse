@@ -20,26 +20,42 @@
   border-radius: 8px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 2rem auto;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .empty-cart h2 {
   margin-bottom: 1rem;
   color: #333;
+  font-size: 1.8rem;
+  font-weight: 600;
 }
 
 .empty-cart p {
   color: #666;
   font-size: 1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
 }
 
 .empty-cart a {
   color: #007bff;
   text-decoration: none;
   font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
 }
 
 .empty-cart a:hover {
-  text-decoration: underline;
+  color: #fff;
+  background-color: #007bff;
+  text-decoration: none;
 }
 
 .cart-content {
@@ -55,17 +71,134 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.select-all-bar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+  border-bottom: 2px solid #e0e0e0;
+  font-weight: 600;
+  color: #333;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  gap: 1.5rem;
+  flex-wrap: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  overflow: visible;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.checkbox-label span {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 1rem;
+  color: inherit;
+}
+
+.checkbox-label:hover {
+  color: #007bff;
+  background-color: #f0f8ff;
+}
+
+.checkbox-label:has(input:indeterminate) {
+  color: #ff9800;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: #dc3545;
+  border-radius: 3px;
+  margin: 0;
+  padding: 0;
+  transition: all 0.2s ease;
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+  accent-color: #dc3545;
+}
+
+.checkbox-label input[type="checkbox"]:indeterminate {
+  accent-color: #ff9800;
+}
+
+.selected-count {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0.4rem 0.9rem;
+  background-color: #007bff;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  margin-left: auto;
+}
+
+.selected-count:hover {
+  background-color: #0056b3;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
 .cart-item {
   display: grid;
-  grid-template-columns: 100px 1fr 100px 100px 50px;
+  grid-template-columns: 40px 100px 1fr 100px 100px 100px 50px;
   gap: 1rem;
   align-items: center;
   padding: 1rem;
   border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
 }
 
 .cart-item:last-child {
   border-bottom: none;
+}
+
+.cart-item.selected {
+  background-color: #f0f8ff;
+}
+
+.item-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
 }
 
 .item-image {
@@ -85,6 +218,7 @@
 .item-details h3 {
   margin-bottom: 0.5rem;
   color: #333;
+  font-weight: 600;
 }
 
 .item-details p {
@@ -174,6 +308,19 @@
   color: #666;
 }
 
+.summary-row.selected {
+  background-color: #f0f8ff;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+}
+
+.summary-row.selected .selected-price {
+  color: #007bff;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
 .summary-row.total {
   font-size: 1.2rem;
   font-weight: bold;
@@ -224,13 +371,35 @@
 }
 
 @media (max-width: 768px) {
+  .cart-page {
+    padding: 1rem;
+  }
+
   .cart-content {
     grid-template-columns: 1fr;
   }
 
+  .select-all-bar {
+    padding: 0.75rem 1rem;
+    flex-wrap: nowrap;
+    gap: 1rem;
+  }
+
+  .checkbox-label {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .selected-count {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+  }
+
   .cart-item {
-    grid-template-columns: 80px 1fr 30px;
-    gap: 0.5rem;
+    grid-template-columns: 40px 80px 1fr;
+    gap: 0.75rem;
+    padding: 1rem 0.75rem;
   }
 
   .item-image {
@@ -238,12 +407,112 @@
     height: 80px;
   }
 
+  .item-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .item-details h3 {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .item-quantity,
   .item-total,
   .remove-btn {
-    grid-column: 3;
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .item-quantity {
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .item-total {
+    text-align: left;
+    padding-top: 0.5rem;
+    border-top: 1px solid #eee;
+  }
+
+  .remove-btn {
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .cart-summary {
+    padding: 1.5rem;
+  }
+
+  .checkout-btn {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cart-page {
+    padding: 0.5rem;
+  }
+
+  .cart-container h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .select-all-bar {
+    padding: 0.6rem 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+  }
+
+  .checkbox-label {
+    font-size: 0.85rem;
+    gap: 0.5rem;
+    padding: 0.3rem 0.4rem;
+  }
+
+  .selected-count {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
   }
 
   .cart-item {
-    grid-template-columns: 80px 1fr;
+    grid-template-columns: 35px 70px 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .item-image {
+    width: 70px;
+    height: 70px;
+  }
+
+  .item-details h3 {
+    font-size: 0.85rem;
+  }
+
+  .item-details p {
+    font-size: 0.8rem;
+  }
+
+  .item-quantity {
+    font-size: 0.85rem;
+  }
+
+  .item-checkbox input[type="checkbox"],
+  .checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }

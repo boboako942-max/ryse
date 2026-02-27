@@ -53,6 +53,23 @@ class PayMongoPaymentHandler {
         throw new Error(`Minimum amount is ₱${100 / 100}.00 (PHP)`);
       }
 
+      // Ensure paymentMethodTypes is a valid array with allowed values
+      let validPaymentMethods = paymentMethodTypes;
+      if (!Array.isArray(validPaymentMethods) || validPaymentMethods.length === 0) {
+        validPaymentMethods = ['gcash'];
+      }
+      
+      // Filter to only allowed payment methods
+      const allowedMethods = ['gcash', 'paymaya', 'card'];
+      validPaymentMethods = validPaymentMethods.filter(method => 
+        allowedMethods.includes(method.toLowerCase())
+      );
+      
+      // If no valid methods after filtering, use default
+      if (validPaymentMethods.length === 0) {
+        validPaymentMethods = ['gcash'];
+      }
+
       const axios = this.getAxiosInstance();
 
       const payload = {
@@ -61,7 +78,7 @@ class PayMongoPaymentHandler {
             amount, // In cents
             currency,
             description,
-            payment_method_allowed: paymentMethodTypes, // PayMongo requires this field name
+            payment_method_allowed: validPaymentMethods, // PayMongo requires this field name
             statement_descriptor: statementDescriptor,
             return_url: returnUrl,
             metadata,

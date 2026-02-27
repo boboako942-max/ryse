@@ -37,10 +37,17 @@ exports.getOrderById = async (req, res, next) => {
 // Create Order
 exports.createOrder = async (req, res, next) => {
   try {
-    const { items, totalAmount, shippingAddress, paymentId, paymentMethod } = req.body;
+    const { totalAmount, shippingAddress, paymentId, paymentMethod } = req.body;
 
-    if (!items || items.length === 0 || !totalAmount || !shippingAddress) {
+    if (!totalAmount || !shippingAddress) {
       return sendError(res, 400, 'Missing required fields');
+    }
+
+    // Get items from user's cart
+    const cart = await Cart.findOne({ userId: req.user.id });
+
+    if (!cart || cart.items.length === 0) {
+      return sendError(res, 400, 'Cart is empty');
     }
 
     const orderId = `ORD-${Date.now()}`;
@@ -48,8 +55,8 @@ exports.createOrder = async (req, res, next) => {
     const order = await Order.create({
       orderId,
       userId: req.user.id,
-      items,
-      totalAmount,
+      items: cart.items,
+      totalAmount: cart.totalPrice,
       shippingAddress,
       paymentId,
       paymentMethod,

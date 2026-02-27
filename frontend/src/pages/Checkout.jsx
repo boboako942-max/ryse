@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { AuthContext } from '../context/AuthContext';
@@ -12,8 +12,8 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 /**
  * GCash Payment Form with Real-time Conversion
  */
-const GCashPaymentForm = ({ shippingData, exchangeRate = 56.5, onSuccess }) => {
-  const { cart, clearCart } = useContext(CartContext);
+const GCashPaymentForm = ({ checkoutCart, shippingData, exchangeRate = 56.5, onSuccess }) => {
+  const { clearCart } = useContext(CartContext);
   const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ const GCashPaymentForm = ({ shippingData, exchangeRate = 56.5, onSuccess }) => {
   const navigate = useNavigate();
 
   // Calculate PHP amount using current exchange rate
-  const phpAmount = (cart.totalPrice * exchangeRate).toFixed(2);
+  const phpAmount = (checkoutCart.totalPrice * exchangeRate).toFixed(2);
 
   const handleGCashPayment = async (e) => {
     e.preventDefault();
@@ -37,9 +37,9 @@ const GCashPaymentForm = ({ shippingData, exchangeRate = 56.5, onSuccess }) => {
       }
 
       const response = await paymentsAPI.createGCashCheckoutSession({
-        items: cart.items,
+        items: checkoutCart.items,
         shippingAddress: shippingData,
-        totalAmount: cart.totalPrice,
+        totalAmount: checkoutCart.totalPrice,
       });
 
       const { checkoutUrl, referenceId, exchangeRate: usedRate } = response.data.data;
@@ -84,7 +84,7 @@ const GCashPaymentForm = ({ shippingData, exchangeRate = 56.5, onSuccess }) => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div style={{ padding: '0.75rem', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.6)' }}>
             <span style={{ color: '#666', fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>💵 USD Amount</span>
-            <strong style={{ fontSize: '1.3rem', color: '#1976D2' }}>${cart.totalPrice.toFixed(2)}</strong>
+            <strong style={{ fontSize: '1.3rem', color: '#1976D2' }}>${checkoutCart.totalPrice.toFixed(2)}</strong>
           </div>
           <div style={{ padding: '0.75rem', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.6)' }}>
             <span style={{ color: '#666', fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>₱ PHP Amount</span>
@@ -106,15 +106,15 @@ const GCashPaymentForm = ({ shippingData, exchangeRate = 56.5, onSuccess }) => {
 /**
  * PayMongo Payment Form (Universal - GCash, Cards, PayMaya)
  */
-const PayMongoPaymentForm = ({ shippingData, exchangeRate = 56.5, paymentMethod = 'gcash', onSuccess }) => {
-  const { cart, clearCart } = useContext(CartContext);
+const PayMongoPaymentForm = ({ checkoutCart, shippingData, exchangeRate = 56.5, paymentMethod = 'gcash', onSuccess }) => {
+  const { clearCart } = useContext(CartContext);
   const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   // Calculate PHP amount using current exchange rate
-  const phpAmount = (cart.totalPrice * exchangeRate).toFixed(2);
+  const phpAmount = (checkoutCart.totalPrice * exchangeRate).toFixed(2);
 
   const methodLabels = {
     gcash: 'GCash',
@@ -138,9 +138,9 @@ const PayMongoPaymentForm = ({ shippingData, exchangeRate = 56.5, paymentMethod 
       console.log('Creating PayMongo payment intent for:', paymentMethod);
 
       const response = await paymentsAPI.createPayMongoPaymentIntent({
-        items: cart.items,
+        items: checkoutCart.items,
         shippingAddress: shippingData,
-        totalAmount: cart.totalPrice,
+        totalAmount: checkoutCart.totalPrice,
         paymentMethod: paymentMethod,
       });
 
@@ -228,7 +228,7 @@ const PayMongoPaymentForm = ({ shippingData, exchangeRate = 56.5, paymentMethod 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div style={{ padding: '0.75rem', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.6)' }}>
             <span style={{ color: '#666', fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>💵 USD Amount</span>
-            <strong style={{ fontSize: '1.3rem', color: '#FF5126' }}>${cart.totalPrice.toFixed(2)}</strong>
+            <strong style={{ fontSize: '1.3rem', color: '#FF5126' }}>${checkoutCart.totalPrice.toFixed(2)}</strong>
           </div>
           <div style={{ padding: '0.75rem', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.6)' }}>
             <span style={{ color: '#666', fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>₱ PHP Amount</span>
@@ -250,17 +250,16 @@ const PayMongoPaymentForm = ({ shippingData, exchangeRate = 56.5, paymentMethod 
 /**
  * Stripe Checkout Form
  */
-const CheckoutForm = ({ shippingData, exchangeRate = 56.5, onSuccess }) => {
+const CheckoutForm = ({ checkoutCart, shippingData, exchangeRate = 56.5, onSuccess }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { user } = useContext(AuthContext);
-  const { cart, clearCart } = useContext(CartContext);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   // Calculate PHP amount for reference
-  const phpAmount = (cart.totalPrice * exchangeRate).toFixed(2);
+  const phpAmount = (checkoutCart.totalPrice * exchangeRate).toFixed(2);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -282,7 +281,7 @@ const CheckoutForm = ({ shippingData, exchangeRate = 56.5, onSuccess }) => {
     try {
       // Create checkout session
       const sessionResponse = await paymentsAPI.createCheckoutSession({
-        items: cart.items,
+        items: checkoutCart.items,
         shippingAddress: shippingData,
       });
 
@@ -339,7 +338,7 @@ const CheckoutForm = ({ shippingData, exchangeRate = 56.5, onSuccess }) => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div style={{ padding: '0.75rem', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.6)' }}>
             <span style={{ color: '#666', fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>💳 USD Amount</span>
-            <strong style={{ fontSize: '1.3rem', color: '#1976D2' }}>${cart.totalPrice.toFixed(2)}</strong>
+            <strong style={{ fontSize: '1.3rem', color: '#1976D2' }}>${checkoutCart.totalPrice.toFixed(2)}</strong>
           </div>
           <div style={{ padding: '0.75rem', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.6)' }}>
             <span style={{ color: '#666', fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>📊 Reference (PHP)</span>
@@ -352,7 +351,7 @@ const CheckoutForm = ({ shippingData, exchangeRate = 56.5, onSuccess }) => {
       </div>
 
       <button type="submit" className="pay-btn stripe-btn" disabled={!stripe || loading}>
-        {loading ? '⏳ Processing...' : `✓ Pay $${cart.totalPrice.toFixed(2)}`}
+        {loading ? '⏳ Processing...' : `✓ Pay $${checkoutCart.totalPrice.toFixed(2)}`}
       </button>
     </form>
   );
@@ -365,6 +364,9 @@ const Checkout = () => {
   const { user } = useContext(AuthContext);
   const { cart } = useContext(CartContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [selectedItemKeys, setSelectedItemKeys] = useState([]);
+  const [filteredCart, setFilteredCart] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('gcash');
   const [exchangeRate, setExchangeRate] = useState(56.5);
   const [loadingRate, setLoadingRate] = useState(true);
@@ -383,18 +385,52 @@ const Checkout = () => {
 
   // Fetch real-time exchange rate on component load
   useEffect(() => {
+    // Get selected items from location state or use all items
+    if (location.state?.selectedItems) {
+      setSelectedItemKeys(location.state.selectedItems);
+    } else if (cart?.items) {
+      // If no selected items in state, select all items by default
+      setSelectedItemKeys(
+        cart.items.map((item) => `${item.productId._id}-${item.size}-${item.color}`)
+      );
+    }
+  }, [location, cart]);
+
+  // Filter cart based on selected items
+  useEffect(() => {
+    if (cart && selectedItemKeys.length > 0) {
+      const filtered = {
+        ...cart,
+        items: cart.items.filter((item) =>
+          selectedItemKeys.includes(`${item.productId._id}-${item.size}-${item.color}`)
+        ),
+      };
+      filtered.totalPrice = filtered.items.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+      filtered.totalItems = filtered.items.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+      setFilteredCart(filtered);
+    } else if (cart) {
+      setFilteredCart(cart);
+    }
+  }, [cart, selectedItemKeys]);
+
+  // Fetch real-time exchange rate
+  useEffect(() => {
     const fetchExchangeRate = async () => {
       try {
         setLoadingRate(true);
         const response = await paymentsAPI.getExchangeRate();
         const rate = response.data.data.rate;
         setExchangeRate(rate);
-        setRateError('');
         console.log('Exchange rate fetched successfully:', rate);
       } catch (err) {
         console.warn('Failed to fetch live exchange rate, using default:', err);
         setExchangeRate(56.5); // Default fallback
-        setRateError('Using default exchange rate (1 USD = ₱56.50)');
       } finally {
         setLoadingRate(false);
       }
@@ -446,12 +482,40 @@ const Checkout = () => {
     return null;
   }
 
-  if (!cart || cart.items.length === 0) {
+  // Show loading state if filteredCart is still being computed
+  if (!filteredCart) {
+    return (
+      <div className="checkout-page">
+        <div className="checkout-container">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            gap: '1rem'
+          }}>
+            <div style={{ fontSize: '3rem', animation: 'spin 1s linear infinite' }}>⏳</div>
+            <h2 style={{ color: '#333' }}>Loading Checkout...</h2>
+            <p style={{ color: '#666' }}>Preparing your order</p>
+          </div>
+        </div>
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (filteredCart.items.length === 0) {
     navigate('/cart');
     return null;
   }
 
-  console.log('Rendering Checkout - User:', user.email, 'Cart items:', cart.items.length, 'Selected payment method:', paymentMethod);
+  console.log('Rendering Checkout - User:', user.email, 'Selected items:', selectedItemKeys.length, 'Selected payment method:', paymentMethod);
 
   return (
     <div className="checkout-page">
@@ -712,13 +776,14 @@ const Checkout = () => {
               {/* Stripe Payment Form */}
               {paymentMethod === 'stripe' && stripePromise && (
                 <Elements stripe={stripePromise}>
-                  <CheckoutForm shippingData={shippingData} exchangeRate={exchangeRate} onSuccess={() => navigate('/orders')} />
+                  <CheckoutForm checkoutCart={filteredCart} shippingData={shippingData} exchangeRate={exchangeRate} onSuccess={() => navigate('/orders')} />
                 </Elements>
               )}
 
               {/* PayMongo Payment Form (GCash) */}
               {paymentMethod === 'gcash' && (
                 <PayMongoPaymentForm 
+                  checkoutCart={filteredCart}
                   shippingData={shippingData} 
                   exchangeRate={exchangeRate} 
                   paymentMethod="gcash"
@@ -729,6 +794,7 @@ const Checkout = () => {
               {/* PayMongo Payment Form (PayMaya) */}
               {paymentMethod === 'paymaya' && (
                 <PayMongoPaymentForm 
+                  checkoutCart={filteredCart}
                   shippingData={shippingData} 
                   exchangeRate={exchangeRate} 
                   paymentMethod="paymaya"
@@ -757,7 +823,7 @@ const Checkout = () => {
         <div className="order-summary">
           <h2>Order Summary</h2>
           <div className="summary-items">
-            {cart.items.map((item) => (
+            {filteredCart.items.map((item) => (
               <div key={`${item.productId._id}-${item.size}-${item.color}`} className="summary-item">
                 <img 
                   src={item.productId.image || 'https://via.placeholder.com/80'} 
@@ -777,7 +843,7 @@ const Checkout = () => {
           <div className="summary-totals">
             <div className="summary-row">
               <span>Subtotal:</span>
-              <span>${cart.totalPrice.toFixed(2)}</span>
+              <span>${filteredCart.totalPrice.toFixed(2)}</span>
             </div>
             <div className="summary-row">
               <span>Shipping:</span>
@@ -789,11 +855,11 @@ const Checkout = () => {
             </div>
             <div className="summary-row" style={{ backgroundColor: '#f0f8ff', padding: '8px', borderRadius: '4px' }}>
               <span>PHP Equivalent:</span>
-              <span style={{ color: '#2196F3', fontWeight: '600' }}>₱{(cart.totalPrice * exchangeRate).toFixed(2)}</span>
+              <span style={{ color: '#2196F3', fontWeight: '600' }}>₱{(filteredCart.totalPrice * exchangeRate).toFixed(2)}</span>
             </div>
             <div className="summary-row total">
               <span>Total (USD):</span>
-              <span>${cart.totalPrice.toFixed(2)}</span>
+              <span>${filteredCart.totalPrice.toFixed(2)}</span>
             </div>
           </div>
         </div>

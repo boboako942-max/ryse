@@ -4,7 +4,9 @@ const authController = require('../controllers/authController');
 const { authMiddleware } = require('../middleware/auth');
 
 router.post('/register', authController.register);
+router.post('/verify-registration-otp', authController.verifyRegistrationOTP);
 router.post('/login', authController.login);
+router.post('/verify-otp', authController.verifyOTP);
 router.post('/google-login', authController.googleLogin);
 router.post('/facebook-login', authController.facebookLogin);
 router.get('/me', authMiddleware, authController.getCurrentUser);
@@ -12,3 +14,4 @@ router.put('/update-profile', authMiddleware, authController.updateProfile);
 router.post('/logout', authMiddleware, authController.logout);
 
 module.exports = router;
+

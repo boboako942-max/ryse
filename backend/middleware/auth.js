@@ -23,16 +23,13 @@ const authMiddleware = (req, res, next) => {
 };
 
 const adminMiddleware = (req, res, next) => {
-  try {
-    authMiddleware(req, res, () => {
-      if (req.user.role !== 'admin') {
-        return sendError(res, 403, 'Admin access required');
-      }
+  authMiddleware(req, res, () => {
+    if (req.user && req.user.role === 'admin') {
       next();
-    });
-  } catch (error) {
-    return sendError(res, 403, error.message);
-  }
+    } else {
+      return sendError(res, 403, 'Admin access required');
+    }
+  });
 };
 
 module.exports = { authMiddleware, adminMiddleware };

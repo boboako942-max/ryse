@@ -32,6 +32,24 @@ api.interceptors.response.use(
         data: error.response.data,
         headers: error.response.headers
       });
+
+      // Handle 401 Unauthorized - only redirect if token is invalid
+      if (error.response.status === 401) {
+        // Check if token exists in localStorage
+        const token = localStorage.getItem('token');
+        
+        // Only clear auth if we don't have a token
+        if (!token) {
+          // Remove invalid/expired token if any
+          localStorage.removeItem('token');
+          // Redirect to login - but don't do it here, let the component handle it
+          console.warn('No valid token found, user should re-authenticate');
+        } else {
+          // Token exists but backend says it's invalid - likely expired
+          console.warn('Token invalid or expired, clearing storage');
+          localStorage.removeItem('token');
+        }
+      }
     } else if (error.request) {
       // Request made but no response
       console.error('API No Response:', error.request);
@@ -46,7 +64,9 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
+  verifyRegistrationOTP: (data) => api.post('/auth/verify-registration-otp', data),
   login: (data) => api.post('/auth/login', data),
+  verifyOTP: (data) => api.post('/auth/verify-otp', data),
   googleLogin: (data) => api.post('/auth/google-login', data),
   facebookLogin: (data) => api.post('/auth/facebook-login', data),
   getCurrentUser: () => api.get('/auth/me'),
@@ -76,10 +96,10 @@ export const categoriesAPI = {
 // Cart API
 export const cartAPI = {
   getCart: () => api.get('/cart'),
-  addToCart: (data) => api.post('/cart/add', data),
-  updateItem: (data) => api.put('/cart/update', data),
-  removeFromCart: (data) => api.post('/cart/remove', data),
-  clearCart: () => api.delete('/cart/clear'),
+  addToCart: (data) => api.post('/cart', data),
+  updateItem: (data) => api.put('/cart', data),
+  removeFromCart: (productId, data) => api.delete(`/cart/${productId}`, { data }),
+  clearCart: () => api.delete('/cart'),
 };
 
 // Orders API

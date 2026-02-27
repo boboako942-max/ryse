@@ -9,6 +9,7 @@ const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [error, setError] = useState(null);
+  const [countdown, setCountdown] = useState(5);
 
   const referenceId = searchParams.get('referenceId');
   const paymentIntentId = searchParams.get('paymentIntentId');
@@ -29,9 +30,16 @@ const PaymentSuccess = () => {
 
         // If payment is succeeded, wait a moment then redirect to orders page
         if (response.data.data.status === 'succeeded') {
-          setTimeout(() => {
-            navigate('/orders');
-          }, 3000);
+          const timer = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                navigate('/orders');
+                clearInterval(timer);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
         }
       } catch (err) {
         console.error('Payment verification error:', err);
@@ -53,18 +61,94 @@ const PaymentSuccess = () => {
           <>
             <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'spin 1s linear infinite' }}>⏳</div>
             <h2 style={{ color: '#333', marginBottom: '0.5rem' }}>Processing Payment</h2>
-            <p style={{ color: '#666', fontSize: '0.95rem' }}>Please wait while we verify your {method} payment...</p>
+            <p style={{ color: '#666', fontSize: '0.95rem' }}>Please wait while we verify your {method || 'payment'} payment...</p>
           </>
         ) : error ? (
           <>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>❌</div>
             <h2 style={{ color: '#d32f2f', marginBottom: '0.5rem' }}>Payment Failed</h2>
             <p style={{ color: '#666', fontSize: '0.95rem', marginBottom: '1.5rem' }}>{error}</p>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+              <button 
+                onClick={() => navigate('/checkout')}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: '#d32f2f',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: '600'
+                }}
+              >
+                Try Again
+              </button>
+              <button 
+                onClick={() => navigate('/cart')}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem 1.5rem',
+                  backgroundColor: '#666',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: '600'
+                }}
+              >
+                Back to Cart
+              </button>
+            </div>
+          </>
+        ) : paymentStatus?.status === 'succeeded' ? (
+          <>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
+            <h2 style={{ color: '#28a745', marginBottom: '0.5rem', fontSize: '1.8rem' }}>Payment Successful!</h2>
+            <div style={{ 
+              backgroundColor: '#d4edda', 
+              border: '1px solid #c3e6cb', 
+              borderRadius: '6px', 
+              padding: '1rem', 
+              marginBottom: '1.5rem',
+              color: '#155724'
+            }}>
+              <p style={{margin: '0', fontSize: '0.95rem'}}>Your order has been placed successfully.</p>
+              <p style={{margin: '0.5rem 0 0 0', fontSize: '0.9rem'}}>Reference ID: <strong>{referenceId}</strong></p>
+            </div>
+            <p style={{ color: '#666', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
+              Redirecting to your orders in <strong>{countdown}</strong> seconds...
+            </p>
             <button 
-              onClick={() => navigate('/cart')}
+              onClick={() => navigate('/orders')}
               style={{
-                padding: '0.75rem 1.5rem',
-                backgroundColor: '#d32f2f',
+                padding: '0.75rem 2rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '600',
+                transition: 'background 0.3s'
+              }}
+            >
+              View My Orders
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏱️</div>
+            <h2 style={{ color: '#ff9800', marginBottom: '0.5rem' }}>Payment Pending</h2>
+            <p style={{ color: '#666', fontSize: '0.95rem', marginBottom: '1.5rem' }}>Your payment is being processed. Please wait or check your payment method.</p>
+            <p style={{ color: '#999', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Status: {paymentStatus?.status || 'unknown'}</p>
+            <button 
+              onClick={() => navigate('/orders')}
+              style={{
+                padding: '0.75rem 2rem',
+                backgroundColor: '#007bff',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -73,24 +157,8 @@ const PaymentSuccess = () => {
                 fontWeight: '600'
               }}
             >
-              Back to Cart
+              Check Orders
             </button>
-          </>
-        ) : paymentStatus?.status === 'succeeded' ? (
-          <>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-            <h2 style={{ color: '#28a745', marginBottom: '0.5rem' }}>Payment Successful!</h2>
-            <p style={{ color: '#666', fontSize: '0.95rem', marginBottom: '1.5rem' }}>Your order has been placed successfully. Redirecting to orders...</p>
-            <div style={{ animation: 'pulse 1s infinite' }}>
-              <p style={{ color: '#999', fontSize: '0.85rem' }}>Reference ID: {referenceId}</p>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏱️</div>
-            <h2 style={{ color: '#ff9800', marginBottom: '0.5rem' }}>Payment Pending</h2>
-            <p style={{ color: '#666', fontSize: '0.95rem', marginBottom: '1.5rem' }}>Your payment is being processed. Please wait or check your payment method.</p>
-            <p style={{ color: '#999', fontSize: '0.85rem' }}>Status: {paymentStatus?.status || 'unknown'}</p>
           </>
         )}
       </div>

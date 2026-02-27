@@ -89,6 +89,7 @@
 }
 
 .loading,
+.loading-state,
 .no-products {
   text-align: center;
   padding: 3rem;

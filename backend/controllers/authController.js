@@ -1,8 +1,11 @@
 const User = require('../models/User');
+const OTP = require('../models/OTP');
+const RegistrationOTP = require('../models/RegistrationOTP');
 const { generateToken } = require('../utils/jwt');
 const { sendResponse, sendError } = require('../utils/response');
+const { sendLoginOTP, sendRegistrationOTP } = require('../utils/email');
 
-// Register User
+// Register User - Send OTP
 exports.register = async (req, res, next) => {
   try {
     const { firstName, lastName, email, password, confirmPassword } = req.body;
@@ -41,24 +44,29 @@ exports.register = async (req, res, next) => {
       return sendError(res, 400, 'Email already registered');
     }
 
-    const user = await User.create({
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Delete existing registration OTP for this email
+    await RegistrationOTP.deleteMany({ email: email.toLowerCase() });
+
+    // Save registration data with OTP
+    await RegistrationOTP.create({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.toLowerCase(),
       password,
+      otp,
+      expiresAt,
     });
 
-    const token = generateToken(user._id, user.role);
+    // Send OTP via email
+    await sendRegistrationOTP(email, otp);
 
-    return sendResponse(res, 201, true, 'User registered successfully', {
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-      },
-      token,
+    return sendResponse(res, 200, true, 'OTP sent to your email', {
+      email: email.toLowerCase(),
+      message: 'Please check your email for the OTP to complete registration',
     });
   } catch (error) {
     next(error);
@@ -97,7 +105,132 @@ exports.login = async (req, res, next) => {
   }
 };
 
-// Google Login
+// Verify OTP and Login
+exports.verifyOTP = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return sendError(res, 400, 'Please provide email and OTP');
+    }
+
+    // Find and verify OTP
+    const otpRecord = await OTP.findOne({ 
+      email: email.toLowerCase(), 
+      otp 
+    });
+
+    if (!otpRecord) {
+      // Increment failed attempts
+      const failedOTP = await OTP.findOne({ email: email.toLowerCase() });
+      if (failedOTP) {
+        failedOTP.attempts += 1;
+        if (failedOTP.attempts >= 5) {
+          await OTP.deleteOne({ _id: failedOTP._id });
+          return sendError(res, 401, 'Too many failed attempts. Please try logging in again.');
+        }
+        await failedOTP.save();
+      }
+      return sendError(res, 401, 'Invalid OTP');
+    }
+
+    // Check if OTP expired
+    if (new Date() > otpRecord.expiresAt) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return sendError(res, 401, 'OTP has expired. Please login again to receive a new OTP');
+    }
+
+    // Find user
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return sendError(res, 404, 'User not found');
+    }
+
+    // Generate token
+    const token = generateToken(user._id, user.role);
+
+    // Delete OTP after successful verification
+    await OTP.deleteOne({ _id: otpRecord._id });
+
+    return sendResponse(res, 200, true, 'Login successful', {
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Verify Registration OTP and Create User
+exports.verifyRegistrationOTP = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return sendError(res, 400, 'Please provide email and OTP');
+    }
+
+    // Find and verify registration OTP
+    const registrationRecord = await RegistrationOTP.findOne({ 
+      email: email.toLowerCase(), 
+      otp 
+    });
+
+    if (!registrationRecord) {
+      // Increment failed attempts
+      const failedRecord = await RegistrationOTP.findOne({ email: email.toLowerCase() });
+      if (failedRecord) {
+        failedRecord.attempts += 1;
+        if (failedRecord.attempts >= 5) {
+          await RegistrationOTP.deleteOne({ _id: failedRecord._id });
+          return sendError(res, 401, 'Too many failed attempts. Please register again.');
+        }
+        await failedRecord.save();
+      }
+      return sendError(res, 401, 'Invalid OTP');
+    }
+
+    // Check if OTP expired
+    if (new Date() > registrationRecord.expiresAt) {
+      await RegistrationOTP.deleteOne({ _id: registrationRecord._id });
+      return sendError(res, 401, 'OTP has expired. Please register again to receive a new OTP');
+    }
+
+    // Create user account
+    const user = await User.create({
+      firstName: registrationRecord.firstName,
+      lastName: registrationRecord.lastName,
+      email: registrationRecord.email,
+      password: registrationRecord.password,
+    });
+
+    // Generate token
+    const token = generateToken(user._id, user.role);
+
+    // Delete registration OTP after successful verification
+    await RegistrationOTP.deleteOne({ _id: registrationRecord._id });
+
+    return sendResponse(res, 201, true, 'Registration completed successfully', {
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 exports.googleLogin = async (req, res, next) => {
   try {
     const { googleId, email, firstName, lastName, profileImage } = req.body;
