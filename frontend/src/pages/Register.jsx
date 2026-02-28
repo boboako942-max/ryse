@@ -1,7 +1,6 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import FacebookLogin from 'react-facebook-login';
 import { AuthContext } from '../context/AuthContext';
 import { authAPI } from '../services/api';
 import './Auth.css';
@@ -23,6 +22,33 @@ const Register = () => {
   const navigate = useNavigate();
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const facebookAppId = import.meta.env.VITE_FACEBOOK_APP_ID;
+
+  // Initialize Facebook SDK
+  useEffect(() => {
+    if (facebookAppId) {
+      // Initialize Facebook SDK
+      window.fbAsyncInit = function () {
+        FB.init({
+          appId: facebookAppId,
+          xfbml: true,
+          version: 'v18.0',
+        });
+      };
+
+      // Load Facebook SDK script
+      const script = document.createElement('script');
+      script.src = 'https://connect.facebook.net/en_US/sdk.js';
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+
+      return () => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+    }
+  }, [facebookAppId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -214,6 +240,36 @@ const Register = () => {
     }
   };
 
+  const handleFacebookLogin = () => {
+    if (!window.FB) {
+      setError('Facebook SDK not loaded. Please refresh the page.');
+      return;
+    }
+
+    FB.login(
+      (response) => {
+        if (response.authResponse) {
+          // User logged in successfully, get user details
+          FB.api(
+            '/me',
+            { fields: 'id,name,email,first_name,last_name,picture' },
+            (userResponse) => {
+              handleFacebookSuccess({
+                userID: response.authResponse.userID,
+                email: userResponse.email,
+                first_name: userResponse.first_name,
+                last_name: userResponse.last_name,
+                picture: userResponse.picture,
+              });
+            }
+          );
+        } else {
+          setError('Facebook login failed or was cancelled');
+        }
+      },
+      { scope: 'public_profile,email' }
+    );
+  };
   return (
     <div className="auth-page">
       <div className="auth-container">
@@ -342,18 +398,15 @@ const Register = () => {
                   </div>
 
                   {facebookAppId && (
-                    <div className="facebook-login">
-                      <FacebookLogin
-                        appId={facebookAppId}
-                        autoLoad={false}
-                        fields="name,picture,email"
-                        scope="public_profile,email"
-                        onClick={() => setLoading(true)}
-                        callback={handleFacebookSuccess}
-                        cssClass="facebook-login-button"
-                        icon="fa-facebook-f"
-                      />
-                    </div>
+                    <button 
+                      type="button" 
+                      className="facebook-login-button"
+                      onClick={handleFacebookLogin}
+                      disabled={loading}
+                    >
+                      <i className="fab fa-facebook-f"></i>
+                      {loading ? 'Signing up...' : 'Sign up with Facebook'}
+                    </button>
                   )}
                 </div>
               </>
